@@ -2,45 +2,89 @@
 #include<linux/platform_device.h>
 #include "platform.h"
 
-//1. create 2 platform data
+#undef pr_fmt
+#define pr_fmt(fmt) "%s : " fmt ,__func__
 
-struct pcddev_platform pcdev_pdata[2] = {
-	 {.size = 512, .perm = RDWR , .serial_number = "PCDEVABC1111"}, {.size = 1024, .perm = RDWR , .serial_number = "PCDEVABC2222"}
+void pcdev_release(struct device *dev){
+	pr_info("device is released");
+}
+
+//1. create 2 platform data
+struct pcdev_platform_data pcdev_pdata[4] = {
+	 {.size = 512, .perm = RDWR , .serial_number = "PCDEVABC1111"}, 
+	 {.size = 1024, .perm = RDWR , .serial_number = "PCDEVABC2222"},
+	 {.size = 128, .perm = RDONLY , .serial_number = "PCDEVABC3333"},
+	 {.size = 32, .perm = WRONLY , .serial_number = "PCDEVABC4444"}
 };
 //2. create 2 platform devices
 
-struct platform_device platform_pcddev_1 = {
+struct platform_device platform_pcdev_1 = {
 	.name = "pseudo-char-device",
 	.id = 0,
 	.dev = {
-		.platform_data = &pcdev_pdata[0]
+		.platform_data = &pcdev_pdata[0],
+		.release = pcdev_release
 	}
 };
 
-struct platform_device platform_pcddev_2 = {
+struct platform_device platform_pcdev_2 = {
 	.name = "pseudo-char-device",
-	.id = 0,
+	.id = 1,
 	.dev = {
-		.platform_data = &pcdev_pdata[1]
+		.platform_data = &pcdev_pdata[1],
+		.release = pcdev_release
 	}
 };
 
+struct platform_device platform_pcdev_3 = {
+        .name = "pseudo-char-device",
+        .id = 2,
+        .dev = {
+                .platform_data = &pcdev_pdata[2],
+                .release = pcdev_release
+        }
+};
 
-static int __init pcddev_platform_init(void){
-	platform_device_register(&platform_pcddev_1);
-	platform_device_register(&platform_pcddev_2);
+
+struct platform_device platform_pcdev_4 = {
+        .name = "pseudo-char-device",
+        .id = 3,
+        .dev = {
+                .platform_data = &pcdev_pdata[3],
+                .release = pcdev_release
+        }
+};
+
+struct platform_device  *platform_pcdevs[] = {
+        &platform_pcdev_1,
+        &platform_pcdev_2,
+        &platform_pcdev_3,
+        &platform_pcdev_4
+};
+
+static int __init pcdev_platform_init(void){
+	//platform_device_register(&platform_pcdev_1);
+	//platform_device_register(&platform_pcdev_2);
+	
+
+	platform_add_devices(platform_pcdevs,ARRAY_SIZE(platform_pcdevs));
+
+	pr_info("device setup module inserted\n");
 	return 0;
 }
 
 
-static void __exit pcddev_platform_exit(void){
-	platform_device_unregister(&platform_pcddev_1);
-	platform_device_unregister(&platform_pcddev_2);
+static void __exit pcdev_platform_exit(void){
+	platform_device_unregister(&platform_pcdev_1);
+	platform_device_unregister(&platform_pcdev_2);
+
+	pr_info("device setup module removed\n");
+
 
 }
 
-module_init(pcddev_platform_init);
-module_exit(pcddev_platform_exit);
+module_init(pcdev_platform_init);
+module_exit(pcdev_platform_exit);
 
 
 MODULE_LICENSE("GPL");              
